@@ -11,9 +11,6 @@ namespace DbLayer.Models
   [BsonIgnoreExtraElements]
   public class DBRoutLine
   {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string id { get; set; }
     public DBRoutLineMeta meta { get; set; } = new DBRoutLineMeta();
 
     public DateTime timestamp { get; set; } = DateTime.UtcNow;

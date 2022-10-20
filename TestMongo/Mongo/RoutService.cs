@@ -1,10 +1,11 @@
 ﻿using DbLayer.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using TestMongo;
 
 namespace DbLayer.Services
 {
-  public class RoutService:IDisposable
+  public class RoutService
   {
     private readonly IMongoCollection<DBRoutLine> _collRouts;
     private readonly MongoClient _mongoClient;
@@ -12,7 +13,8 @@ namespace DbLayer.Services
     public RoutService(
     )
     {
-      var ConnectionString = "mongodb://mongoservice:27017";
+      var ConnectionString = 
+        "mongodb://mongoservice:27018";
       _mongoClient = new MongoClient(
         ConnectionString);
 
@@ -29,7 +31,7 @@ namespace DbLayer.Services
         var timeField = nameof(DBRoutLine.timestamp);
         var metaField = nameof(DBRoutLine.meta);
         createOptions.TimeSeriesOptions =
-          new TimeSeriesOptions(timeField, metaField, TimeSeriesGranularity.Minutes);
+          new TimeSeriesOptions(timeField, metaField, TimeSeriesGranularity.Seconds);
 
 
         mongoDatabase.CreateCollection(
@@ -44,6 +46,7 @@ namespace DbLayer.Services
 
 
       CreateIndexes();
+
     }
 
     private void CreateIndexes()
@@ -60,27 +63,19 @@ namespace DbLayer.Services
 
         _collRouts.Indexes.CreateOneAsync(indexModel);
       }
-      ////////////////////////////////////////////////
-      {
-        IndexKeysDefinition<DBRoutLine> keys =
-          new IndexKeysDefinitionBuilder<DBRoutLine>()
-          .Ascending(d => d.meta.id);
-
-        var indexModel = new CreateIndexModel<DBRoutLine>(
-          keys, new CreateIndexOptions()
-          { Name = "id" }
-        );
-
-        _collRouts.Indexes.CreateOneAsync(indexModel);
-      }
     }
 
     public async Task InsertManyAsync(List<DBRoutLine> list)
     {
+      InsertManyOptions opt = new InsertManyOptions()
+      {
+        BypassDocumentValidation = true
+      };
+
       await _collRouts.InsertManyAsync(list);
     }
 
-    public async Task<int> GetMaxCount()
+    public async Task<long> GetMaxCount()
     {
       var last = await _collRouts
         .Find(i=> i.meta.counter > 0)
@@ -90,11 +85,6 @@ namespace DbLayer.Services
         return 0;
       }
       return last.meta.counter;
-    }
-
-    public void Dispose()
-    {
-      
     }
   }
 }

@@ -11,9 +11,6 @@ namespace DbLayer.Models
 {
   public class DBRoutLineMeta
   {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string id { get; set; }
     public int counter { get; set; }
   }
 }

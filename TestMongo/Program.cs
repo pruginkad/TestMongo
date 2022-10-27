@@ -5,11 +5,12 @@ using DbLayer.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using MongoDB.Bson;
+using System.Runtime.CompilerServices;
+using TestDatabases.Redis;
 using TestMongo;
 using TestMongo.Influx;
 
 Console.WriteLine("Hello, World!");
-
 
 
 try
@@ -24,6 +25,9 @@ try
   var task2 = InfluxTest.RunTest(token);
   tasks.Add(task2);
 
+  //var task3 = RedisTest.RunTest(token);
+  //tasks.Add(task3);
+
 
   Console.WriteLine("Press any key to stop emulation\n");
   Console.ReadKey();
@@ -34,4 +38,17 @@ try
 catch (Exception ex)
 {
   Console.WriteLine(ex.Message);
+}
+
+static class ConsoleWrite
+{
+  static object _locker = new object();
+  static public void WriteConsole(string str, int line)
+  {
+    lock(_locker)
+    {
+      Console.SetCursorPosition(0, line);
+      Console.Write(str);
+    }    
+  }
 }

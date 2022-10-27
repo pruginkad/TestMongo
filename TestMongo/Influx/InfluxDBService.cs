@@ -6,6 +6,7 @@ using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
 using Microsoft.Extensions.Configuration;
+using static System.Net.WebRequestMethods;
 
 namespace app.Services
 {
@@ -13,23 +14,29 @@ namespace app.Services
   {
     private readonly string _token;
     private readonly InfluxDBClient _client;
-
+    private readonly string server_addr =
+      "http://localhost:8086/";
+    //"https://us-east-1-1.aws.cloud2.influxdata.com";
+    private readonly string _org =
+    //"1d5ad4e69b6b19b5";
+    "organization";
+    //"http://localhost:8086";
     public InfluxDBService(IConfiguration configuration)
     {
       _token = configuration.GetValue<string>("InfluxDB:Token");
-      _client = InfluxDBClientFactory.Create("http://localhost:8086", _token);
+      _client = InfluxDBClientFactory.Create(server_addr, _token);
     }
 
     public void Write(Action<WriteApi> action)
     {
-      using var client = InfluxDBClientFactory.Create("http://localhost:8086", _token);
+      using var client = InfluxDBClientFactory.Create(server_addr, _token);
       using var write = client.GetWriteApi();
       action(write);
     }
 
     public async Task<T> QueryAsync<T>(Func<QueryApi, Task<T>> action)
     {
-      using var client = InfluxDBClientFactory.Create("http://localhost:8086", _token);
+      using var client = InfluxDBClientFactory.Create(server_addr, _token);
       var query = client.GetQueryApi();
       return await action(query);
     }
@@ -39,16 +46,16 @@ namespace app.Services
       var write = _client.GetWriteApiAsync();
 
       await write
-        .WriteMeasurementsAsync(list, WritePrecision.Ns, "bucket", "organization");
+        .WriteMeasurementsAsync(list, WritePrecision.Ns, "bucket", _org);
     }
     public async Task<long> GetMaxCount()
     {
       try
       {
         var query = _client.GetQueryApi();
-        var flux = "from(bucket:\"bucket\") |> range(start: 0) |> last()";
+        var flux = "from(bucket:\"bucket\") |> range(start: -1h) |> last()";
         //var flux = "from(bucket:\"bucket\") |> range(start: 0) |> max()";
-        var tables = await query.QueryAsync(flux, "organization");
+        var tables = await query.QueryAsync(flux, _org);
 
         var table = tables.FirstOrDefault();
 

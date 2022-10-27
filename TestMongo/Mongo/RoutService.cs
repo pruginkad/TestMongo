@@ -10,11 +10,20 @@ namespace DbLayer.Services
     private readonly IMongoCollection<DBRoutLine> _collRouts;
     private readonly MongoClient _mongoClient;
     private readonly string CollName = "TSTable";
+
+
+    //var settings = MongoClientSettings.FromConnectionString
+    //  ("mongodb+srv://serovdanil:$Power321@cluster0.6r3p76r.mongodb.net/?retryWrites=true&w=majority");
+    //settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+    //var client = new MongoClient(settings);
+    //var database = client.GetDatabase("test");
+
     public RoutService(
     )
     {
-      var ConnectionString = 
+      var ConnectionString =
         "mongodb://mongoservice:27018";
+        //"mongodb+srv://serovdanil:$Power321@cluster0.6r3p76r.mongodb.net/?retryWrites=true&w=majority";
       _mongoClient = new MongoClient(
         ConnectionString);
 

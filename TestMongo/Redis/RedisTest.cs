@@ -1,17 +1,16 @@
 ﻿using app.Models;
 using app.Services;
-using DbLayer.Models;
-using DbLayer.Services;
 using Microsoft.Extensions.Configuration;
+using NRedisTimeSeries.DataTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TestMongo.Influx
+namespace TestDatabases.Redis
 {
-  internal class InfluxTest
+  internal class RedisTest
   {
     static public async Task RunTest(CancellationToken token)
     {
@@ -20,20 +19,22 @@ namespace TestMongo.Influx
       .AddEnvironmentVariables()
       .Build();
 
-      var service = new InfluxDBService(config);
-      var list = new List<AltitudeModel>();
+      var service = new RedisService(config);
+      var list = new List<(string key, TimeStamp timestamp, double value)>();
 
       for (int i = 0; i < 10000; i++)
       {
-        AltitudeModel line = new AltitudeModel();
+        var line = ("sensor2", DateTime.Now, (double)i);
         list.Add(line);
       }
+
+      var list1 = list.ToArray();
 
       Task task = Task.Run(async () => {
         var max_counter = await service.GetMaxCount();
 
         bool recover = false;
-        Random random= new Random();
+        Random random = new Random();
 
         while (!token.IsCancellationRequested)
         {
@@ -41,26 +42,25 @@ namespace TestMongo.Influx
           {
             if (!recover)
             {
-              foreach (AltitudeModel line in list)
+              for (int i = 0; i < list1.Length; i++)
               {
-                line.counter = ++max_counter;
-                line.new_counter = line.counter- random.Next(100000,2000000);
-                line.timestamp = DateTime.UtcNow;
-                line.some_data = random.Next(0, 100);
+                list1[i].key = i.ToString();
+                list1[i].value = (double)++max_counter;
+                list1[i].timestamp = DateTime.UtcNow;
               }
             }
 
             var t1 = DateTime.Now;
 
-            await service.InsertManyAsync(list);
+            await service.InsertManyAsync(list1.ToList());
 
             var t2 = DateTime.Now;
             max_counter = await service.GetMaxCount();
             var t3 = DateTime.Now;
 
             ConsoleWrite.WriteConsole(
-              $"inflx:{max_counter / 1000000.0}->Insert:{(int)(t2 - t1).TotalMilliseconds}, GetMax:{(int)(t3 - t2).TotalMilliseconds}                   ",
-              3);
+              $"redis:{max_counter / 1000000.0}->Insert:{(int)(t2 - t1).TotalMilliseconds}, GetMax:{(int)(t3 - t2).TotalMilliseconds}                   ",
+              4);
 
             recover = false;
           }
@@ -69,7 +69,7 @@ namespace TestMongo.Influx
             recover = true;
             await Task.Delay(3000);
             Console.WriteLine(ex.Message.ToString());
-            service = new InfluxDBService(config);
+            service = new RedisService(config);
 
             max_counter = await service.GetMaxCount();
           }

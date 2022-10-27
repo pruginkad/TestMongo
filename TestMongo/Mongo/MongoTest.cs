@@ -47,9 +47,9 @@ namespace TestMongo
             max_counter = await service.GetMaxCount();
             var t3 = DateTime.Now;
 
-            Console
-            .WriteLine(
-              $"mongo:{max_counter / 1000000.0}->Insert:{(int)(t2 - t1).TotalMilliseconds}, GetMax:{(int)(t3 - t2).TotalMilliseconds}");
+            ConsoleWrite.WriteConsole(
+              $"mongo:{max_counter / 1000000.0}->Insert:{(int)(t2 - t1).TotalMilliseconds}, GetMax:{(int)(t3 - t2).TotalMilliseconds}                   ",
+              4);
 
             recover = false;
           }

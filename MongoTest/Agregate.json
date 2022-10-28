@@ -1,0 +1,22 @@
+.aggregate( [
+   {
+      $project: {
+         date: {
+            $dateToParts: { date: "$timestamp" }
+         },
+         temp: 1
+      }
+   },
+   {
+      $group: {
+         _id: {
+            date: {
+               year: "$date.year",
+               month: "$date.month",
+               day: "$date.day"
+            }
+         },
+         avgTmp: { $avg: "$temp" }
+      }
+   }
+] )

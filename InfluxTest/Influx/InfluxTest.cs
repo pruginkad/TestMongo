@@ -42,8 +42,12 @@ namespace TestInflux
 
     public static async Task RunTest(CancellationToken token)
     {
-      await RunTestDb(10000000, 5000, token);
-      await TestAvg();
+      //await RunTestDb(10000000, 5000, token);
+      for (int i = 0; i < 5; i++)
+      {
+        Console.WriteLine("**********************");
+        await TestAvg();
+      }
     }
 
     static async Task TestAvg()

@@ -45,8 +45,14 @@ namespace TestMongo
 
     public static async Task RunTest(CancellationToken token)
     {
-      await RunTestDb(10000000, 5000, token);
-      TestAvg();
+      //await RunTestDb(10000000, 5000, token);
+
+      for (int i = 0; i < 5; i++)
+      {
+        Console.WriteLine("**********************");
+        TestAvg();
+      }
+      
     }
 
     static void WriteListToConsole(List<BsonDocument> list)

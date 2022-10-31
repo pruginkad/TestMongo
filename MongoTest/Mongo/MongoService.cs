@@ -17,7 +17,7 @@ namespace DbLayer.Services
     private readonly string DBName = "TSTest";
     public MongoService()
     {
-      var ConnectionString = "mongodb://mongoservice:27017";
+      var ConnectionString = "mongodb://mongoservice:27018";
       _mongoClient = new MongoClient(ConnectionString);
 
       _db = _mongoClient.GetDatabase(DBName);

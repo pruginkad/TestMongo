@@ -1,23 +1,20 @@
-﻿using DbLayer.Services;
-using MongoDB.Bson;
-using MongoDB.Bson.IO;
-using System;
+﻿
+
+using app.Services;
+using InfluxDB.Client.Core.Flux.Domain;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-using System.Threading.Tasks;
 using TSDBComparison;
-using static DbLayer.Services.MongoService;
+using static app.Services.InfluxDBService;
 
-namespace TestMongo
+namespace TestInflux
 {
-  internal class MongoTest
+  internal class InfluxTest
   {
-    static MongoService _service = new MongoService();
+    static InfluxDBService _service = new InfluxDBService();
 
-    static async  Task RunTestDb(int recordsCount, int objectsCount, CancellationToken token)
-    {      
+    static async Task RunTestDb(int recordsCount, int objectsCount, CancellationToken token)
+    {
       await _service.DeleteCollection();
       await _service.CreateCollection();
 
@@ -38,7 +35,7 @@ namespace TestMongo
         items.RemoveRange(0, curStep);
 
         ConsoleWrite.WriteConsole(
-        $"step:{i} ->mongo Insert {curStep} items:{(int)(t2 - t1).TotalMilliseconds}[ms] left:{items.Count},                  ",
+        $"step:{i} ->influx Insert {curStep} items:{(int)(t2 - t1).TotalMilliseconds}[ms] left:{items.Count},                  ",
               1);
       }
     }
@@ -46,68 +43,67 @@ namespace TestMongo
     public static async Task RunTest(CancellationToken token)
     {
       await RunTestDb(10000000, 5000, token);
-      TestAvg();
+      await TestAvg();
     }
 
-    static void WriteListToConsole(List<BsonDocument> list)
+    static async Task TestAvg()
     {
-      return;
-      var jsonSettings = new JsonWriterSettings()
-      {
-        Indent = false
-      };
-
-      foreach ( var element in list)
-      {
-        Console.WriteLine(element.ToJson(jsonSettings));
-      }
-    }
-    static void TestAvg()
-    {      
       var t1 = DateTime.Now;
-      var avg = _service.Agregate(
-        DateTime.Today.AddDays(-1),
-        DateTime.Today,
+      var avg = await _service.Agregate(
+        DateTime.UtcNow.AddDays(-1),
+        DateTime.UtcNow,
         E_GROUPBY.hours);
 
       var t2 = DateTime.Now;
       WriteListToConsole(avg);
       Console.WriteLine(
-        $"mongo agrg for a day, group by hours:{(int)(t2 - t1).TotalMilliseconds}[ms]");
+        $"influx agrg for a day, group by hours:{(int)(t2 - t1).TotalMilliseconds}[ms]");
       Console.WriteLine("--------------------------------------------------");
 
       t1 = DateTime.Now;
-      avg = _service.Agregate(
-        DateTime.Today.AddDays(-7),
-        DateTime.Today,
+      avg = await _service.Agregate(
+        DateTime.UtcNow.AddDays(-7),
+        DateTime.UtcNow,
         E_GROUPBY.days);
       t2 = DateTime.Now;
       WriteListToConsole(avg);
       Console.WriteLine(
-        $"mongo agrg for the last week, group by days:{(int)(t2 - t1).TotalMilliseconds}[ms]");
+        $"influx agrg for the last week, group by days:{(int)(t2 - t1).TotalMilliseconds}[ms]");
       Console.WriteLine("--------------------------------------------------");
 
       t1 = DateTime.Now;
-      avg = _service.Agregate(
-        DateTime.Today.AddMonths(-6),
-        DateTime.Today,
+      avg = await _service.Agregate(
+        DateTime.UtcNow.AddMonths(-6),
+        DateTime.UtcNow,
         E_GROUPBY.days);
       t2 = DateTime.Now;
       //WriteListToConsole(avg);
       Console.WriteLine(
-        $"mongo agrg for some month, group by days:{(int)(t2 - t1).TotalMilliseconds}[ms]");
+        $"influx agrg for some month, group by days:{(int)(t2 - t1).TotalMilliseconds}[ms]");
       Console.WriteLine("--------------------------------------------------");
 
       t1 = DateTime.Now;
-      avg = _service.Agregate(
-        DateTime.Today.AddMonths(-6),
-        DateTime.Today,
+      avg = await _service.Agregate(
+        DateTime.UtcNow.AddMonths(-6),
+        DateTime.UtcNow,
         E_GROUPBY.months);
       t2 = DateTime.Now;
       WriteListToConsole(avg);
       Console.WriteLine(
-        $"mongo agrg for a year, group by month:{(int)(t2 - t1).TotalMilliseconds}[ms]");
+        $"influx agrg for a year, group by month:{(int)(t2 - t1).TotalMilliseconds}[ms]");
       Console.WriteLine("--------------------------------------------------");
+    }
+
+    static void WriteListToConsole(List<FluxTable> list)
+    {
+      return;
+      foreach (var element in list)
+      {
+        foreach(var r in element.Records)
+        {
+          Console.WriteLine($"{r.Values["_time"].ToString()}->{r.Values["result"].ToString()} = {r.Values["_value"].ToString()} ");
+        }        
+      }
     }
 
   }
